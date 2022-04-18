@@ -30,6 +30,9 @@ export class Impl implements Methods<InternalState> {
     if (state.players.find((p) => p.id === userId) !== undefined) {
       return Response.error("Already joined");
     }
+    if (state.gameStatus !== GameStatus.WAITING) {
+      return Response.error("Round in progress, try again after");
+    }
     state.players.push({
       id: userId,
       validGuesses: [],
@@ -54,13 +57,12 @@ export class Impl implements Methods<InternalState> {
     state.boggleBoard = pfBoggle.generate(4);
     state.validGuessess = pfBoggle.solve(state.boggleBoard).map((a: any) => a.word);
 
-    // Reset player score
+    // Reset player guesses
     state.players = state.players.map((p) => {
       return {
         ...p,
         validGuesses: [],
         invalidGuesses: [],
-        score: 0
       };
     })
     return Response.ok();
@@ -74,6 +76,9 @@ export class Impl implements Methods<InternalState> {
       return Response.error("Game not started");
     }
     const guess = request.guess.toUpperCase();
+    if (guess.length < 2) {
+      return Response.error("Guess must be 2 characters or more");
+    }
     if (!state.validGuessess.includes(guess)) {
       player.invalidGuesses.push(guess);
     } else {
@@ -83,7 +88,28 @@ export class Impl implements Methods<InternalState> {
     return Response.ok();
   }
   getUserState(state: InternalState, userId: UserId): GameState {
-    return state;
+    const curPlayer = state.players.find((p) => p.id === userId);
+    const redactedPlayers = state.players.map((player) => {
+      if (player.id === userId) {
+        return player;
+      }
+      return {
+        ...player,
+        validGuesses: state.gameStatus === GameStatus.WAITING ? player.validGuesses : player.validGuesses.map((guess) => {
+          if (curPlayer!.validGuesses.includes(guess)) {
+            return guess;
+          }
+          return "*".repeat(guess.length);
+        }),
+        invalidGuesses: [],
+      }
+    });
+    return {
+      ...state,
+      timeRemaining: Math.round(state.timeRemaining),
+      validGuessess: [],
+      players: redactedPlayers,
+    }
   }
   onTick(state: InternalState, ctx: Context, timeDelta: number): void {
     if (state.timeRemaining <= 0) {

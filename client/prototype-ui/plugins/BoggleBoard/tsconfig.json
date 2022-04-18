@@ -6,7 +6,6 @@
     "target": "esnext",
     "moduleResolution": "node",
     "isolatedModules": true,
-    "experimentalDecorators": true,
-    "useDefineForClassFields": false
+    "jsx": "react"
   }
 }
