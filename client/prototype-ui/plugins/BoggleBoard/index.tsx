@@ -22,7 +22,7 @@ function BoggleBoardComponent({ val, state, client }: { val: BoggleBoard; state:
     if (!isSelected) {
       const index = selectedPositions.indexOf(position);
       if (index < 0) {
-        // throw error
+        console.error("current letter not already selected");
       } else {
         setSelectedPositions(selectedPositions.slice(0, index));
       }
@@ -45,6 +45,8 @@ function BoggleBoardComponent({ val, state, client }: { val: BoggleBoard; state:
   return <div>
     {tableElement}
     <button
+      className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      style={{ margin: "10px 0px" }}
       onClick={onSubmit}
     >
       Submit
@@ -59,10 +61,6 @@ interface IBoggleLetterProps {
 }
 
 function BoggleLetter(props: IBoggleLetterProps) {
-  const onClick = () => {
-    props.setSelected(!props.isSelected);
-  }
-
   const divStyle: React.CSSProperties = {
     width: '50px',
     height: '50px',
@@ -74,15 +72,13 @@ function BoggleLetter(props: IBoggleLetterProps) {
     outline: "1px solid black",
     fontSize: "2rem",
     boxShadow: "2px 2px 2px 2px black",
+    background: props.isSelected ? "yellow" : "",
   };
 
-  if (props.isSelected) {
-    divStyle.background = "yellow";
-  }
   return <div
     className="boggle-letter"
     style={divStyle}
-    onClick={onClick}
+    onClick={() => props.setSelected(!props.isSelected)}
   >
     {props.letter}
   </div>
